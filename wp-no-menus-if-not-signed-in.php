@@ -36,12 +36,19 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	return;
 }
 
+/**
+ * A class to prevent display of menus when a user isn't signed in.
+ *
+ * @since 1.0.0
+ */
+
 class WP_No_Menus_If_Not_Signed_In {
 
 	/**
 	 * Initiazlie ourselves by setting up constants and hooks
 	 *
 	 * @since 1.0.0
+	 * @method
 	 *
 	 * @param null
 	 * @return null
@@ -100,6 +107,7 @@ class WP_No_Menus_If_Not_Signed_In {
 
 	public function add_filters() {
 
+		// Hook in late to do our best to ensure other plugins don't overwrite this.
 		add_filter( 'pre_wp_nav_menu', array( $this, 'pre_wp_nav_menu__hide_menu' ), 99, 2 );
 
 	}/* add_filters() */
@@ -118,19 +126,25 @@ class WP_No_Menus_If_Not_Signed_In {
 	 * @return null
 	 */
 
-	public function pre_wp_nav_menu__hide_menu( $output, $args ) {
+	public function pre_wp_nav_menu__hide_menu( $output = null, $args ) {
 
+		// Bail if we're in the admin as we only want to stop front-end menus
 		if ( $this->is_admin() ) {
 			return null;
 		}
 
+		// Only hide menus for those not signed in
 		if ( $this->is_user_signed_in() ) {
 			return null;
 		}
 
+		// Ensure that the menu isn't echod as this still gets output if the menu forces echo
 		$args->echo = false;
 
-		return 'no';
+		// We need to return something other than null
+		$output = 'no';
+
+		return $output;
 
 	}/* pre_wp_nav_menu__hide_menu() */
 
@@ -184,6 +198,7 @@ add_action( 'plugins_loaded', 'rt_wp_no_menus_if_not_signed_in' );
 function rt_wp_no_menus_if_not_signed_in() {
 
 	$wpnminsi = new WP_No_Menus_If_Not_Signed_In();
+
 	$wpnminsi->init();
 
 }/* rt_wp_no_menus_if_not_signed_in() */
